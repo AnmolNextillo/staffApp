@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Modal,
+  Button,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { appColors } from '../../utils/color';
@@ -24,6 +26,8 @@ import { hitSubjectList } from '../../redux/GetSujectListSlice';
 import { handleShowMessage } from '../../utils/Constants';
 import AnnualCalenderIcon from '../../assets/svg/AnnualCalenderIcon';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import BottomListModal from '../../component/BottomListModal';
+import BottomListSubject from '../../component/BottomListSubject';
 
 const AddHomework = () => {
   const navigation = useNavigation();
@@ -39,6 +43,10 @@ const AddHomework = () => {
   const [classList, setClassList] = useState(null);
   const [subjectList, setSubjectList] = useState(null);
   const [imageUri, setImageUri] = useState(null);
+  const [className, setClassName] = useState('');
+  const [tempDate, setTempDate] = useState(new Date());
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuVisibleSub, setMenuVisibleSub] = useState(false);
 
   const responseSubject = useSelector(state => state.getSubjectReducer.data);
   const responseClasses = useSelector(state => state.getClassReducer.data);
@@ -81,6 +89,7 @@ const AddHomework = () => {
   useEffect(() => {
     if (responseClasses && responseClasses.status === 1) {
       setClassList(responseClasses.data);
+      setClassName(responseClasses.data[0].name);
       setSelectedClass(responseClasses.data[0]._id);
     }
   }, [responseClasses]);
@@ -88,7 +97,7 @@ const AddHomework = () => {
   useEffect(() => {
     if (responseSubject && responseSubject.status === 1) {
       setSubjectList(responseSubject.data);
-      setSubject(responseSubject.data[0]._id);
+      setSubject(responseSubject.data[0]);
     }
   }, [responseSubject]);
 
@@ -193,7 +202,17 @@ const AddHomework = () => {
             onChangeText={setTitle}
           /> */}
 
-          <View style={styles.pickerContainer}>
+          <BottomListModal
+            isModalVisible={menuVisible}
+            setModalVisible={setMenuVisible}
+            data={classList}
+            setSelectedClass={setSelectedClass}
+            setClassName={setClassName}
+            className={className}
+            from="class"
+          />
+
+          {/* <View style={styles.pickerContainer}>
             <Picker
               selectedValue={selectedClass}
               style={styles.picker}
@@ -206,21 +225,64 @@ const AddHomework = () => {
                 />
               ))}
             </Picker>
-          </View>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={subject}
-              style={styles.picker}
-              onValueChange={itemValue => setSubject(itemValue)}>
-              {subjectList?.map(item => (
-                <Picker.Item
-                  key={item._id}
-                  label={item.name}
-                  value={item._id}
-                />
-              ))}
-            </Picker>
-          </View>
+          </View> */}
+
+          <BottomListSubject
+            isModalVisible={menuVisibleSub}
+            setModalVisible={setMenuVisibleSub}
+            subjectData={subjectList}
+            setSubject={setSubject}
+            setClassName={setSubject}
+            className={subject}
+            from="subject"
+          />
+
+          {/* {subjectList?.length > 0 && (
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={subject}
+                style={styles.picker}
+                onValueChange={itemValue => setSubject(itemValue)}>
+                {subjectList?.map(item => (
+                  <Picker.Item
+                    key={item._id}
+                    label={item.name}
+                    value={item._id}
+                  />
+                ))}
+              </Picker>
+            </View>
+          )} */}
+
+          {showDatePicker && Platform.OS === 'ios' && (
+            <Modal transparent={true} animationType="slide">
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
+                <View style={{ backgroundColor: 'white', padding: 16 }}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setTempDate(selectedDate); // Store temporarily until OK is pressed
+                      }
+                    }}
+                  />
+                  <Button
+                    title="OK"
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      if (tempDate) {
+                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        setDate(formattedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
+          )}
+
 
           <View
             style={[

@@ -1,5 +1,6 @@
 import {
     Image,
+    Linking,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -57,6 +58,10 @@ const Profile = ({ navigation }) => {
       }
     },[responseLogout])
 
+    const openLink = () => {
+        Linking.openURL('https://api.kcmschool.co.in/privacy');
+      };
+
     return (
         <SafeAreaView style={styles.containerStyle}>
             <ScrollView
@@ -89,7 +94,7 @@ const Profile = ({ navigation }) => {
                             <ChangePasswordIcon />
                             <Text style={styles.cardNameStyle}>Change Password</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.cardBox}>
+                        <TouchableOpacity style={styles.cardBox} onPress={openLink}>
                             <Image
                                 source={getImage('booking')}
                                 style={styles.imageBoxStyle}
@@ -100,10 +105,10 @@ const Profile = ({ navigation }) => {
                     </View>
 
                     <View style={styles.CardStyleLeft}>
-                        <TouchableOpacity style={styles.cardBoxLeft}>
+                        {/* <TouchableOpacity style={styles.cardBoxLeft}>
                             <DemoIcon />
                             <Text style={styles.cardNameStyle}>Demo</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <TouchableOpacity style={styles.cardBoxLeft}
                         onPress={() => onLogoutClick()}
                         >

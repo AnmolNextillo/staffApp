@@ -7,35 +7,43 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert,
+  Modal,
+  Button,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {appColors} from '../../utils/color';
-import {useNavigation} from '@react-navigation/core';
-import {useDispatch, useSelector} from 'react-redux';
-import {Picker} from '@react-native-picker/picker';
-import {launchImageLibrary} from 'react-native-image-picker';
+import React, { useEffect, useState } from 'react';
+import { appColors } from '../../utils/color';
+import { useNavigation } from '@react-navigation/core';
+import { useDispatch, useSelector } from 'react-redux';
+import { Picker } from '@react-native-picker/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import {
   addAnnouncement,
   clearAddAnnouncementData,
 } from '../../redux/AddAnnouncementSlice';
-import {clearUploadFileData, uploadFile} from '../../redux/uploadFile';
-import {hitClassList} from '../../redux/GetClassListSlice';
-import {hitSubjectList} from '../../redux/GetSujectListSlice';
-import {handleShowMessage} from '../../utils/Constants';
+import { clearUploadFileData, uploadFile } from '../../redux/uploadFile';
+import { hitClassList } from '../../redux/GetClassListSlice';
+import { hitSubjectList } from '../../redux/GetSujectListSlice';
+import { handleShowMessage } from '../../utils/Constants';
 import AnnualCalenderIcon from '../../assets/svg/AnnualCalenderIcon';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import DropDownArrow from '../../assets/svg/DropDownArrow';
+import ArrowRight from '../../assets/svg/ArrowIcon';
+import BottomListModal from '../../component/BottomListModal';
+import BottomListSubject from '../../component/BottomListSubject';
 
 const AddAnnoucement = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuVisibleSub, setMenuVisibleSub] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
+  const [className, setClassName] = useState('');
   const [classList, setClassList] = useState(null);
   const [subjectList, setSubjectList] = useState(null);
   const [imageUri, setImageUri] = useState(null);
@@ -53,7 +61,7 @@ const AddAnnoucement = () => {
 
   useEffect(() => {
     if (selectedClass) {
-      const payload = {classId: selectedClass};
+      const payload = { classId: selectedClass };
       dispatch(hitSubjectList(payload));
     }
   }, [selectedClass]);
@@ -61,14 +69,16 @@ const AddAnnoucement = () => {
   useEffect(() => {
     if (responseClasses && responseClasses.status === 1) {
       setSelectedClass(responseClasses.data[0]._id);
-      setClassList(responseClasses.data);
+      setClassName(responseClasses.data[0].name);
+      setClassList(responseClasses.data)
     }
   }, [responseClasses]);
 
   useEffect(() => {
+    console.log('responseSubject data ===> ', responseSubject);
     if (responseSubject && responseSubject.status === 1) {
       setSubjectList(responseSubject.data);
-      setSubject(responseSubject.data[0]._id);
+      setSubject(responseSubject.data[0]);
     }
   }, [responseSubject]);
 
@@ -104,7 +114,7 @@ const AddAnnoucement = () => {
 
   const handleImagePick = () => {
     console.log('launchImageLibrary ===>', launchImageLibrary);
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
       if (response.assets && response.assets.length > 0) {
         setImageUri(response.assets[0]);
       }
@@ -152,8 +162,8 @@ const AddAnnoucement = () => {
   }, [responseUploadFile]);
 
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <View style={{flex: 1}}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.backText} onPress={() => navigation.goBack()}>
             Back
@@ -162,7 +172,26 @@ const AddAnnoucement = () => {
         </View>
         <ScrollView style={styles.inputContainer}>
           {/* <TextInput style={styles.input} placeholder="Event Title" value={title} onChangeText={setTitle} /> */}
+          <BottomListModal
+            isModalVisible={menuVisible}
+            setModalVisible={setMenuVisible}
+            data={classList}
+            setSelectedClass={setSelectedClass}
+            setClassName={setClassName}
+            className={className}
+            from="class"
+          />
 
+          <BottomListSubject
+            isModalVisible={menuVisibleSub}
+            setModalVisible={setMenuVisibleSub}
+            subjectData={subjectList}
+            setSubject={setSubject}
+            setClassName={setSubject}
+            className={subject}
+            from="subject"
+          />
+          {/* {subjectList?.length > 0 && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={subject}
@@ -172,56 +201,55 @@ const AddAnnoucement = () => {
                 <Picker.Item
                   key={item._id}
                   label={item.name}
-                  value={item.name}
-                />
-              ))}
-            </Picker>
-          </View>
-
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedClass}
-              style={styles.picker}
-              onValueChange={itemValue => setSelectedClass(itemValue)}>
-              {classList?.map(item => (
-                <Picker.Item
-                  key={item._id}
-                  label={item.name}
                   value={item._id}
                 />
               ))}
             </Picker>
           </View>
+          )} */}
 
           <View
             style={[
               styles.input,
-              {flexDirection: 'row', alignContent: 'center'},
+              { flexDirection: 'row', alignContent: 'center' },
             ]}>
             <Text
-              style={{color: date ? appColors.black : appColors.grey, flex: 1}}>
+              style={{ color: date ? appColors.black : appColors.grey, flex: 1 }}>
               {date || 'Select Date'}
             </Text>
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
               <AnnualCalenderIcon height={24} width={24} />
             </TouchableOpacity>
           </View>
-          {showDatePicker && (
-            <DateTimePicker
-              value={date ? new Date(date) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  const formattedDate = selectedDate
-                    .toISOString()
-                    .split('T')[0]; // YYYY-MM-DD
-                  setDate(formattedDate);
-                }
-              }}
-            />
+          {showDatePicker && Platform.OS === 'ios' && (
+            <Modal transparent={true} animationType="slide">
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
+                <View style={{ backgroundColor: 'white', padding: 16 }}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setTempDate(selectedDate); // Store temporarily until OK is pressed
+                      }
+                    }}
+                  />
+                  <Button
+                    title="OK"
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      if (tempDate) {
+                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        setDate(formattedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
           )}
+
 
           <TextInput
             style={[styles.input, styles.descriptionInput]}
@@ -236,7 +264,7 @@ const AddAnnoucement = () => {
             <Text style={styles.buttonText}>Upload Image</Text>
           </TouchableOpacity>
           {imageUri && (
-            <Image source={{uri: imageUri.uri}} style={styles.imagePreview} />
+            <Image source={{ uri: imageUri.uri }} style={styles.imagePreview} />
           )}
           <TouchableOpacity
             style={styles.button}
@@ -246,7 +274,7 @@ const AddAnnoucement = () => {
         </ScrollView>
       </View>
     </SafeAreaView>
-  );
+  ); 
 };
 
 export default AddAnnoucement;
@@ -291,6 +319,10 @@ const styles = StyleSheet.create({
     borderColor: appColors.grey,
     borderWidth: 1,
     marginTop: 12,
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // picker: {
   //     borderWidth: 1,

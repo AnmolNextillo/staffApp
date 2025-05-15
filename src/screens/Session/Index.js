@@ -31,9 +31,9 @@ import {
             <Text style={styles.headerText}>Session</Text>
           </View>
           <ScrollView style={{padding: 16}}>
-            <TouchableOpacity style={styles.sessionSelect}>
+            <View style={styles.sessionSelect}>
               <Text style={styles.sessionText}>2025-2026</Text>
-            </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </SafeAreaView>

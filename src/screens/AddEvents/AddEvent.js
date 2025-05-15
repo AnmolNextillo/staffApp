@@ -7,32 +7,37 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Modal,
+  Button,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {appColors} from '../../utils/color';
-import {useNavigation} from '@react-navigation/core';
-import {useDispatch, useSelector} from 'react-redux';
-import {Picker} from '@react-native-picker/picker';
-import {launchImageLibrary} from 'react-native-image-picker';
+import React, { useEffect, useState } from 'react';
+import { appColors } from '../../utils/color';
+import { useNavigation } from '@react-navigation/core';
+import { useDispatch, useSelector } from 'react-redux';
+import { Picker } from '@react-native-picker/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import {
   addAnnouncement,
   clearAddAnnouncementData,
 } from '../../redux/AddAnnouncementSlice';
-import {clearUploadFileData, uploadFile} from '../../redux/uploadFile';
-import {hitClassList} from '../../redux/GetClassListSlice';
-import {hitSubjectList} from '../../redux/GetSujectListSlice';
-import {handleShowMessage} from '../../utils/Constants';
+import { clearUploadFileData, uploadFile } from '../../redux/uploadFile';
+import { hitClassList } from '../../redux/GetClassListSlice';
+import { hitSubjectList } from '../../redux/GetSujectListSlice';
+import { handleShowMessage } from '../../utils/Constants';
 import AnnualCalenderIcon from '../../assets/svg/AnnualCalenderIcon';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import BottomListModal from '../../component/BottomListModal';
+import BottomListSubject from '../../component/BottomListSubject';
 
-const AddEvent = ({route}) => {
+const AddEvent = () => {
 
   // const item = route?.params?.data;
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const [title, setTitle] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuVisibleSub, setMenuVisibleSub] = useState(false);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
@@ -41,6 +46,8 @@ const AddEvent = ({route}) => {
   const [classList, setClassList] = useState(null);
   const [subjectList, setSubjectList] = useState(null);
   const [imageUri, setImageUri] = useState(null);
+  const [className, setClassName] = useState('');
+  const [tempDate, setTempDate] = useState(new Date());
 
   const responseSubject = useSelector(state => state.getSubjectReducer.data);
   const responseClasses = useSelector(state => state.getClassReducer.data);
@@ -55,11 +62,11 @@ const AddEvent = ({route}) => {
   //       setDate(item.date || '');
   //       setDescription(item.description || '');
   //       setImageUri(item.media ? { uri: `https://school-project-varun.s3.ap-south-1.amazonaws.com/${item.media}` } : null);
-    
+
   //       if (item.classId) {
   //         setSelectedClass(item.classId);
   //       }
-    
+
   //       if (item.subjectId) {
   //         setSubject(item.subjectId);
   //       }
@@ -72,7 +79,7 @@ const AddEvent = ({route}) => {
 
   useEffect(() => {
     if (selectedClass) {
-      const payload = {classId: selectedClass};
+      const payload = { classId: selectedClass };
       dispatch(hitSubjectList(payload));
     }
   }, [selectedClass]);
@@ -81,13 +88,14 @@ const AddEvent = ({route}) => {
     if (responseClasses && responseClasses.status === 1) {
       setSelectedClass(responseClasses.data[0]._id);
       setClassList(responseClasses.data);
+      setClassName(responseClasses.data[0].name);
     }
   }, [responseClasses]);
 
   useEffect(() => {
     if (responseSubject && responseSubject.status === 1) {
       setSubjectList(responseSubject.data);
-      setSubject(responseSubject.data[0]._id);
+      setSubject(responseSubject.data[0]);
     }
   }, [responseSubject]);
 
@@ -123,7 +131,7 @@ const AddEvent = ({route}) => {
 
   const handleImagePick = () => {
     console.log('launchImageLibrary ===>', launchImageLibrary);
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
       if (response.assets && response.assets.length > 0) {
         setImageUri(response.assets[0]);
       }
@@ -171,8 +179,8 @@ const AddEvent = ({route}) => {
   }, [responseUploadFile]);
 
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <View style={{flex: 1}}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.backText} onPress={() => navigation.goBack()}>
             Back
@@ -182,7 +190,17 @@ const AddEvent = ({route}) => {
         <ScrollView style={styles.inputContainer}>
           {/* <TextInput style={styles.input} placeholder="Event Title" value={title} onChangeText={setTitle} /> */}
 
-          <View style={styles.pickerContainer}>
+          <BottomListModal
+            isModalVisible={menuVisible}
+            setModalVisible={setMenuVisible}
+            data={classList}
+            setSelectedClass={setSelectedClass}
+            setClassName={setClassName}
+            className={className}
+            from="class"
+          />
+
+          {/* <View style={styles.pickerContainer}>
             <Picker
               selectedValue={selectedClass}
               style={styles.picker}
@@ -195,8 +213,19 @@ const AddEvent = ({route}) => {
                 />
               ))}
             </Picker>
-          </View>
+          </View> */}
 
+          <BottomListSubject
+            isModalVisible={menuVisibleSub}
+            setModalVisible={setMenuVisibleSub}
+            subjectData={subjectList}
+            setSubject={setSubject}
+            setClassName={setSubject}
+            className={subject}
+            from="subject"
+          />
+
+          {/* {subjectList?.length > 0 && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={subject}
@@ -211,21 +240,50 @@ const AddEvent = ({route}) => {
               ))}
             </Picker>
           </View>
+          )}       */}
 
           <View
             style={[
               styles.input,
-              {flexDirection: 'row', alignContent: 'center'},
+              { flexDirection: 'row', alignContent: 'center' },
             ]}>
             <Text
-              style={{color: date ? appColors.black : appColors.grey, flex: 1}}>
+              style={{ color: date ? appColors.black : appColors.grey, flex: 1 }}>
               {date || 'Select Date'}
             </Text>
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
               <AnnualCalenderIcon height={24} width={24} />
             </TouchableOpacity>
           </View>
-          {showDatePicker && (
+          {showDatePicker && Platform.OS === 'ios' && (
+            <Modal transparent={true} animationType="slide">
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
+                <View style={{ backgroundColor: 'white', padding: 16 }}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setTempDate(selectedDate); // Store temporarily until OK is pressed
+                      }
+                    }}
+                  />
+                  <Button
+                    title="OK"
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      if (tempDate) {
+                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        setDate(formattedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
+          )}
+          {/* {showDatePicker && (
             <DateTimePicker
               value={date ? new Date(date) : new Date()}
               mode="date"
@@ -240,7 +298,7 @@ const AddEvent = ({route}) => {
                 }
               }}
             />
-          )}
+          )} */}
 
           <TextInput
             style={[styles.input, styles.descriptionInput]}
@@ -255,7 +313,7 @@ const AddEvent = ({route}) => {
             <Text style={styles.buttonText}>Upload Image</Text>
           </TouchableOpacity>
           {imageUri && (
-            <Image source={{uri: imageUri.uri}} style={styles.imagePreview} />
+            <Image source={{ uri: imageUri.uri }} style={styles.imagePreview} />
           )}
           <TouchableOpacity
             style={styles.button}
